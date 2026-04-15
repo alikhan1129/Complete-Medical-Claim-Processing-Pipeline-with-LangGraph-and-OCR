@@ -1,0 +1,260 @@
+You are a senior backend engineer and AI systems architect.
+
+Build a production-ready FastAPI + LangGraph project for a Medical Claim Processing Pipeline.
+
+IMPORTANT: Use Groq API (NOT Gemini) for all LLM operations.
+
+We will use:
+https://api.groq.com/openai/v1/chat/completions
+
+Models (choose one):
+- llama-3.3-70b-versatile (preferred)
+- llama-3.1-8b-instant (fast fallback)
+
+---
+
+# 🎯 GOAL
+
+Build a FastAPI service that processes uploaded PDF claim documents and extracts structured medical claim data using a LangGraph multi-agent pipeline.
+
+---
+
+# 📌 API REQUIREMENT
+
+POST /api/process
+
+Input:
+- claim_id (string)
+- file (PDF)
+
+Output:
+- Structured JSON containing extracted claim data
+
+---
+
+# 🧠 LANGGRAPH FLOW (STRICT)
+
+START
+  ↓
+Segregator Agent (Groq LLM classifier)
+  ↓
+Routes pages into 3 extraction agents:
+   ├── ID Agent
+   ├── Discharge Summary Agent
+   ├── Itemized Bill Agent
+  ↓
+Aggregator
+  ↓
+END
+
+IMPORTANT:
+- Segregator runs FIRST
+- Only 3 extraction agents exist
+- Agents must NOT process full PDF
+- They only receive relevant page text
+
+---
+
+# 🧩 SEGREGATOR AGENT (CRITICAL)
+
+- Input: full PDF (page-wise text extracted using pdfplumber)
+- Use Groq LLM to classify each page into:
+
+  claim_forms
+  cheque_or_bank_details
+  identity_document
+  itemized_bill
+  discharge_summary
+  prescription
+  investigation_report
+  cash_receipt
+  other
+
+OUTPUT MUST BE STRICT JSON ONLY:
+
+{
+  "page_map": {
+    "1": ["identity_document"],
+    "2": ["itemized_bill"]
+  }
+}
+
+RULES:
+- No explanations
+- No markdown
+- No extra text
+- Only valid JSON
+- Multiple labels allowed per page
+
+---
+
+# 🤖 EXTRACTION AGENTS (3 ONLY)
+
+Each agent receives ONLY relevant page text.
+
+---
+
+## 1. ID Agent
+Extract:
+- patient_name
+- dob
+- id_number
+- policy_number
+
+Return STRICT JSON only.
+
+---
+
+## 2. Discharge Summary Agent
+Extract:
+- diagnosis
+- admit_date
+- discharge_date
+- physician_name
+
+Return STRICT JSON only.
+
+---
+
+## 3. Itemized Bill Agent
+Extract:
+- items: list of {name, cost}
+- total_amount (must calculate correctly)
+
+Return STRICT JSON only.
+
+---
+
+# 🔗 AGGREGATOR NODE
+
+Combine outputs:
+
+{
+  "claim_id": "...",
+  "identity": {...},
+  "discharge_summary": {...},
+  "bill": {...}
+}
+
+If missing data → return null safely.
+
+---
+
+# ⚙️ TECH STACK (MANDATORY)
+
+- FastAPI
+- LangGraph
+- Groq API (OpenAI-compatible endpoint)
+- pdfplumber
+- Python 3.10+
+
+---
+
+# 🏗 PROJECT STRUCTURE
+
+app/
+  main.py
+  graph.py
+
+  agents/
+    segregator.py
+    id_agent.py
+    discharge_agent.py
+    bill_agent.py
+    aggregator.py
+
+  utils/
+    llm.py
+    pdf_loader.py
+
+---
+
+# 🔌 GROQ LLM WRAPPER (MANDATORY)
+
+Create a reusable function using OpenAI-compatible format:
+
+POST https://api.groq.com/openai/v1/chat/completions
+
+Headers:
+Authorization: Bearer GROQ_API_KEY
+Content-Type: application/json
+
+Body:
+{
+  "model": "llama-3.3-70b-versatile",
+  "messages": [
+    {"role": "system", "content": "You are a strict JSON extraction engine."},
+    {"role": "user", "content": "<prompt>"}
+  ],
+  "temperature": 0.1
+}
+
+Must return only response content.
+
+---
+
+# 🧠 LLM RULES
+
+- Groq must be used for ALL LLM tasks
+- Always enforce JSON-only output
+- Retry once if invalid JSON
+- Never return markdown or explanations from LLM
+- Add validation helper for JSON parsing
+
+---
+
+# 🚀 FASTAPI REQUIREMENTS
+
+- Accept PDF upload
+- Convert PDF → page-wise text
+- Pass into LangGraph state
+- Return final aggregated JSON response
+
+---
+
+# 📊 LOGGING (IMPORTANT)
+
+Log:
+- page classification results
+- routing decisions
+- agent outputs
+- final response
+
+---
+
+# 🧪 EDGE CASES
+
+- Empty PDF → error response
+- Invalid JSON → retry once
+- Missing pages → skip safely
+- Extraction failure → fallback empty string
+
+---
+
+# 📄 README MUST INCLUDE
+
+- Architecture diagram
+- LangGraph workflow explanation
+- Why segregator improves efficiency
+- Groq API usage explanation
+- Setup instructions
+- Example API request/response
+- Deployment steps (Render/Railway optional)
+
+---
+
+# ⭐ IMPORTANT EVALUATION POINTS
+
+Make it production-grade:
+
+- clean modular structure
+- reusable Groq client
+- strict JSON enforcement
+- separation of concerns
+- efficient token usage
+- robust error handling
+- deterministic outputs
+
+---
+
+Now generate the COMPLETE working codebase.

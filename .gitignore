@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Project specific
+*.pdf
+response_*.json
+test_extraction_result.json
+temp_*
+debug_pdf.py
+check_ocr.py
+run_full_test.py
+
+# Documents
+*.docx
+~$*
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

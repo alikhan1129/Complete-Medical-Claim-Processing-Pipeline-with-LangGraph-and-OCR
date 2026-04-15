@@ -1,0 +1,10 @@
+__pycache__/
+.env
+*.pdf
+*.json
+*.pyc
+.git/
+temp_*
+run_full_test.py
+check_ocr.py
+debug_pdf.py

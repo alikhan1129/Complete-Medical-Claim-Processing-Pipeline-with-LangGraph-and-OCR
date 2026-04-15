@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+pydantic
+pydantic-settings
+langgraph
+langchain-openai
+pdfplumber
+httpx
+python-dotenv
+pytesseract
+pdf2image
+Pillow
