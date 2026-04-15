@@ -28,3 +28,5 @@ run_full_test.py
 # OS
 .DS_Store
 Thumbs.db
+
+prompt.txt
