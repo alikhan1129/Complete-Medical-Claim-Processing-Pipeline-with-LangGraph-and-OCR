@@ -19,6 +19,10 @@ from app.models import ClaimResponse
 
 app = FastAPI(title="Medical Claim Processing Pipeline")
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Medical Claim Processing Pipeline is running"}
+
 @app.post("/api/process", response_model=ClaimResponse)
 async def process_pdf_claim(
     claim_id: str = Form(...),

@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory in the container
 WORKDIR /app
 
+# Set PYTHONPATH to ensure 'app' package is discoverable
+ENV PYTHONPATH=/app
+
 # Copy the requirements file into the container
 COPY requirements.txt .
 
