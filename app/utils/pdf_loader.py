@@ -24,6 +24,7 @@ def extract_text_from_pdf(file_path: str) -> List[Dict[str, any]]:
     try:
         # 1. Try normal text extraction
         with pdfplumber.open(file_path) as pdf:
+            num_pages = len(pdf.pages)
             for i, page in enumerate(pdf.pages):
                 text = page.extract_text()
                 if text:
@@ -35,27 +36,35 @@ def extract_text_from_pdf(file_path: str) -> List[Dict[str, any]]:
                     logger.warning(f"No text on page {i + 1}. Attempting OCR...")
         
         # 2. If no text was found on any page, or some pages were empty, use OCR
-        if not pages_text or len(pages_text) < len(pdf.pages):
-            logger.info("Some pages are empty. Using OCR fallback for missing pages...")
-            
-            # Convert PDF to images (requires poppler installed)
-            images = convert_from_path(file_path)
+        if not pages_text or len(pages_text) < num_pages:
+            logger.info(f"Some pages are empty. Using OCR fallback for missing pages (Total: {num_pages})...")
             
             # Map of already extracted pages
             existing_pages = {p["page_number"] for p in pages_text}
             
-            for i, image in enumerate(images):
+            for i in range(num_pages):
                 page_num = i + 1
                 if page_num not in existing_pages:
                     logger.info(f"Running OCR on page {page_num}...")
-                    ocr_text = pytesseract.image_to_string(image)
-                    if ocr_text.strip():
-                        pages_text.append({
-                            "page_number": page_num,
-                            "text": ocr_text
-                        })
-                    else:
-                        logger.warning(f"OCR also failed to extract text from page {page_num}")
+                    
+                    # Convert only the single page to an image to save memory
+                    # Using first_page and last_page parameters of convert_from_path
+                    try:
+                        single_page_images = convert_from_path(file_path, first_page=page_num, last_page=page_num)
+                        if single_page_images:
+                            image = single_page_images[0]
+                            ocr_text = pytesseract.image_to_string(image)
+                            if ocr_text.strip():
+                                pages_text.append({
+                                    "page_number": page_num,
+                                    "text": ocr_text
+                                })
+                            else:
+                                logger.warning(f"OCR also failed to extract text from page {page_num}")
+                    except Exception as ocr_err:
+                        logger.error(f"Failed to process OCR for page {page_num}: {str(ocr_err)}")
+                        # Continue with other pages even if one fails
+                        continue
 
         # Sort pages to keep them in order
         pages_text.sort(key=lambda x: x["page_number"])

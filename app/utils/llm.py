@@ -10,9 +10,6 @@ DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 logger = logging.getLogger(__name__)
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY is missing")
-
 async def call_groq_llm(
     prompt: str,
     system_prompt: str = "You are a strict JSON extraction engine. Return ONLY valid JSON.",
@@ -22,6 +19,10 @@ async def call_groq_llm(
     """
     Calls Groq API with automatic JSON extraction from markdown and retry logic.
     """
+    if not GROQ_API_KEY:
+        logger.error("GROQ_API_KEY is missing from environment variables.")
+        raise ValueError("GROQ_API_KEY is missing. Please set it in your environment.")
+
     if not prompt or not isinstance(prompt, str):
         raise ValueError("Invalid prompt sent to Groq LLM")
 
